@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="1100" height="247">
+      <g ng-bind-html="linesGraphicData.yAxis"></g>
+
+      <g>
+            <line x1="19" y1="230" x2="1100" y2="230" stroke="#f47bb3" stroke-width="3"></line>
+      </g>
+
+      <g ng-bind-html="linesGraphicData.dashLines"></g>
+
+      <g ng-bind-html="linesGraphicData.xAxis"></g>
+
+      <g ng-bind-html="linesGraphicData.linesValues"></g>
+
+      <g ng-bind-html="linesGraphicData.pointsValues"></g>
+</svg>

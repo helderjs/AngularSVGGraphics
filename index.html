@@ -1,0 +1,169 @@
+<!doctype html>
+<html lang="en" ng-app="App">
+    <head></head>
+    <body ng-controller="GraphicController">
+        <div id="content">
+            <!--<h3>Graphic</h3>-->
+            <!--<span lines-graphic ng-include="'resources/line_chart_1.svg'" graphic-data="graphicData.started" lines-graphic-data="linesGraphicData"></span>-->
+            <span lines-graphic graphic-data="graphicData.started" lines-graphic-data="linesGraphicData.started"></span>
+            <span lines-graphic graphic-data="graphicData.points" lines-graphic-data="linesGraphicData.points"></span>
+            <span lines-graphic graphic-data="graphicData.career" lines-graphic-data="linesGraphicData.career"></span>
+        </div>
+        <script type="application/javascript" src="https://ajax.googleapis.com/ajax/libs/angularjs/1.3.9/angular.min.js"></script>
+        <script type="application/javascript">
+            angular.module('App', [])
+                .controller('GraphicController', ['$scope', function ($scope) {
+                    $scope.linesGraphicData = {
+                        started: {},
+                        points: {},
+                        career: {}
+                    };
+                    $scope.graphicData = {
+                        started: {
+                            axis: [
+                                ['01/2015', '02/2015', '03/2015', '04/2015', '05/2015', '06/2015', '07/2015', '08/2015', '09/2015', '10/2015', '11/2015', '12/2015'],
+                                [0, 10, 20, 30, 40, 50]
+                            ],
+                            values: [40, 25, 11, 48, 2, 20, 49, 50, 10, 0, 15, 50]
+                        },
+                        points: {
+                            axis: [
+                                ['01/2015', '02/2015', '03/2015', '04/2015', '05/2015', '06/2015', '07/2015', '08/2015', '09/2015', '10/2015', '11/2015', '12/2015'],
+                                [0, 1000, 2000, 3000, 4000, 5000]
+                            ],
+                            values: [900, 2389, 2500, 3600, 4800, 2000, 2000, 1200, 3800, 4200, 4900, 3100]
+                        },
+                        career: {
+                            axis: [
+                                ['01/2015', '02/2015', '03/2015', '04/2015', '05/2015', '06/2015'],
+                                [0, 1000, 2000, 3000]
+                            ],
+                            values: [900, 2389, 2500, 1600, 2800, 100]
+                        }
+                    };
+                }])
+                .directive('linesGraphic', ['$sce', function ($sce) {
+                    function link(scope, element, attrs) {
+                        var minX = 50,
+                            minY = 12,
+                            maxY = minY,
+                            marker = '<text x="{coordX}" y="{coordY}" style="font-size: 10px; font-family: \'Helvetica Neue\'; fill: #f47bb3;">{point}</text>',
+                            dash_marker = '<line x1="19" y1="{coordY}" x2="1100" y2="{coordY}" stroke="#fcd0e5" stroke-width="1" stroke-dasharray="2,2"></line>',
+                            circle = '<circle cx="{coordX}" cy="{coordY}" r="7" fill="{bg}" stroke="#f47bb3" stroke-width="4"></circle>',
+                            line = '<line x1="{coordX1}" y1="{coordY1}" x2="{coordX2}" y2="{coordY2}" stroke="#f47bb3" stroke-width="4"></line>',
+                            xAxis = "",
+                            yAxis = "",
+                            dash = "",
+                            pointsValues = "",
+                            linesValues = "",
+                            badColor = "#ffbebe",
+                            goodColor = "#a8f1a0",
+                            neutralColor = "#fff",
+                            graphicWidth = element.find('svg').attr('width') - minX,
+                            graphicHeight = element.find('svg').attr('height'),
+                            lenX = Math.round(graphicWidth / scope.graphicData.axis[0].length),
+                            lenY = Math.round(graphicHeight / scope.graphicData.axis[1].length),
+                            local = {};
+
+                        function createYAxis() {
+                            var position = minY;
+                            scope.graphicData.axis[1].reverse().forEach(function (value) {
+                                yAxis += marker.replace('{point}', value).replace('{coordX}', 0).replace('{coordY}', position);
+                                dash += dash_marker.replace('{coordY}', (position - 3)).replace('{coordY}', (position - 3));
+
+                                maxY = position;
+                                position += (lenY);
+                            }, this);
+
+                            local.yAxis = $sce.trustAsHtml(yAxis);
+                            local.dashLines = $sce.trustAsHtml(dash);
+                        }
+
+                        function createXAxis() {
+                            var position = minX;
+                            scope.graphicData.axis[0].forEach(function (value) {
+                                xAxis += marker.replace('{point}', value).replace('{coordX}', position).replace('{coordY}', 247);
+
+                                position += (lenX);
+                            }, this);
+
+                            local.xAxis = $sce.trustAsHtml(xAxis);
+                        }
+
+                        function createValues() {
+                            var coordX = minX;
+                            var coordY = minY;
+                            var line1Value = "";
+                            var line2Value = "";
+
+                            scope.graphicData.axis[1].reverse();
+
+                            scope.graphicData.values.forEach(function (value, indexValue) {
+                                var index = 0;
+                                var diff = 0;
+                                scope.graphicData.axis[1].forEach(function (yVal, key) {
+                                    if (yVal <= value) {
+                                        index = key;
+                                        diff = value - yVal;
+                                    }
+                                });
+
+                                var position = minY;
+                                for (var i = 0; i < index; i++) {
+                                    position += lenY;
+                                }
+
+                                var base = scope.graphicData.axis[1][1] - scope.graphicData.axis[1][0];
+                                position += (lenY * diff) / base;
+                                coordY = Math.round((maxY - position + minY) - 3);
+
+                                function getBgColor(currentIndex, currentValue) {
+                                    if (currentIndex == (scope.graphicData.values.length - 1)) {
+                                        if (currentValue >= scope.graphicData.values[scope.graphicData.values.length - 2]) {
+                                            return goodColor;
+                                        } else {
+                                            return badColor;
+                                        }
+                                    } else {
+                                        return neutralColor;
+                                    }
+                                }
+
+                                pointsValues += circle.replace('{coordX}', (coordX + 18)).replace('{coordY}', (coordY)).replace('{bg}', getBgColor(indexValue, value));
+
+                                if (indexValue % 2 == 0) {
+                                    line1Value += line.replace('{coordX1}', (coordX + 18)).replace('{coordY1}', coordY);
+                                    linesValues += line2Value != "" ? line2Value.replace('{coordX2}', (coordX + 18)).replace('{coordY2}', coordY) : "";
+                                    line2Value = "";
+                                } else {
+                                    linesValues += line1Value.replace('{coordX2}', (coordX + 18)).replace('{coordY2}', coordY);
+                                    line1Value = "";
+                                    line2Value = line.replace('{coordX1}', (coordX + 18)).replace('{coordY1}', coordY);
+                                }
+
+                                coordX += lenX;
+                            });
+
+                            local.pointsValues = $sce.trustAsHtml(pointsValues);
+                            local.linesValues = $sce.trustAsHtml(linesValues);
+                        }
+
+                        function buildGraphic() {
+                            createYAxis();
+                            createXAxis();
+                            createValues();
+                            scope.linesGraphicData = local;
+                        }
+
+                        buildGraphic();
+                    }
+
+                    return {
+                        scope: {graphicData: "=graphicData", linesGraphicData: "=linesGraphicData"},
+                        link: link,
+                        templateUrl: 'resources/line_chart_1.svg'
+                    };
+                }]);
+        </script>
+    </body>
+</html>
